@@ -1,16 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import './styles.css'; // Import CSS để sử dụng cho styling
+
 const QuizDetails = () => {
-  const { quizId } = useParams(); // Get the quizId from the URL
-  const navigate = useNavigate(); // For navigating back to the quiz list
+  const { quizId } = useParams(); // Lấy quizId từ URL
+  const navigate = useNavigate(); // Dùng để điều hướng về danh sách quiz
   const [quiz, setQuiz] = useState(null);
-  const [answers, setAnswers] = useState({}); // To store user's selected answers
-  const [showResults, setShowResults] = useState(false); // To show quiz results
+  const [answers, setAnswers] = useState({}); // Lưu câu trả lời của người dùng
+  const [showResults, setShowResults] = useState(false); // Hiển thị kết quả
+
   useEffect(() => {
     const fetchQuiz = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/api/quizzes/${quizId}`);
+        const response = await axios.get(`http://localhost:3000/api/quizzes/${quizId}`);
         setQuiz(response.data);
       } catch (error) {
         console.error('Error fetching quiz:', error);
@@ -18,28 +21,33 @@ const QuizDetails = () => {
     };
     fetchQuiz();
   }, [quizId]);
-  // Handle answer selection
+
+  // Xử lý lựa chọn câu trả lời
   const handleAnswerChange = (questionId, selectedOptionIndex) => {
     if (!showResults) {
       setAnswers({
         ...answers,
-        [questionId]: selectedOptionIndex
+        [questionId]: selectedOptionIndex,
       });
     }
   };
-  // Handle quiz submission
+
+  // Xử lý khi nộp quiz
   const handleSubmit = () => {
-    setShowResults(true); // Show results and disable selection
+    setShowResults(true); // Hiển thị kết quả và khóa lựa chọn
   };
-  // Handle going back to the quiz list
+
+  // Xử lý khi quay lại danh sách quiz
   const handleGoBack = () => {
-    navigate('/'); // Navigate back to the quiz list
+    navigate('/'); // Quay lại danh sách quiz
   };
+
   if (!quiz) {
     return <div>Loading...</div>;
   }
+
   return (
-    <div>
+    <div className="quiz-details-container">
       <h2>{quiz.title}</h2>
       <p>{quiz.description}</p>
       <form>
@@ -49,30 +57,29 @@ const QuizDetails = () => {
           return (
             <div key={question._id} className="question-block">
               <h3>{question.text}</h3>
-              <ul>
+              <ul className="options-list">
                 {question.options.map((option, index) => (
                   <li key={index}>
-                    <label>
+                    <label className={showResults && index === question.correctAnswerIndex ? 'correct-answer' : ''}>
                       <input
                         type="radio"
-                        name={question._id} // Group options by question
+                        name={question._id} // Nhóm các tùy chọn theo câu hỏi
                         value={index}
                         checked={answers[question._id] === index}
                         onChange={() => handleAnswerChange(question._id, index)}
-                        disabled={showResults} // Disable selection after submission
+                        disabled={showResults} // Vô hiệu sau khi nộp bài
                       />
                       {option}
                     </label>
                   </li>
                 ))}
               </ul>
-              {/* Show answer feedback right after the question */}
               {showResults && (
                 <p>
                   {isCorrect ? (
-                    <span style={{ color: 'green' }}>✔️ Correct</span>
+                    <span className="result correct">✔️ Correct</span>
                   ) : (
-                    <span style={{ color: 'red' }}>
+                    <span className="result wrong">
                       ❌ Wrong (Correct answer: {question.options[question.correctAnswerIndex]})
                     </span>
                   )}
@@ -82,17 +89,18 @@ const QuizDetails = () => {
           );
         })}
         {!showResults && (
-          <button type="button" onClick={handleSubmit}>
+          <button type="button" className="submit-btn" onClick={handleSubmit}>
             Submit
           </button>
         )}
       </form>
       {showResults && (
-        <button type="button" onClick={handleGoBack}>
+        <button type="button" className="back-btn" onClick={handleGoBack}>
           Back to Quiz List
         </button>
       )}
     </div>
   );
 };
+
 export default QuizDetails;
