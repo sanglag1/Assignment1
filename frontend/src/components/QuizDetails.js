@@ -12,6 +12,11 @@ const QuizDetails = () => {
 
   useEffect(() => {
     const fetchQuiz = async () => {
+      if (!quizId) {
+        console.error("Quiz ID is undefined");
+        return;
+      }
+  
       try {
         const quizData = await quizService.getQuizById(quizId);
         setQuiz(quizData);
@@ -21,6 +26,7 @@ const QuizDetails = () => {
     };
     fetchQuiz();
   }, [quizId]);
+  
 
   const handleAnswerSelection = (questionIndex, optionIndex) => {
     setSelectedAnswers(prev => ({
@@ -48,19 +54,19 @@ const QuizDetails = () => {
   const handleNextQuestion = () => {
     if (currentQuestionIndex < quiz.questions.length - 1) {
       setCurrentQuestionIndex(prevIndex => prevIndex + 1);
-      setFeedback(''); // Reset feedback when moving to the next question
+      setFeedback('');
     }
   };
 
   const handlePreviousQuestion = () => {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(prevIndex => prevIndex - 1);
-      setFeedback(''); // Reset feedback when moving to the previous question
+      setFeedback('');
     }
   };
 
   const handleBackToHome = () => {
-    navigate('/'); // Navigate back to home
+    navigate('/');
   };
 
   if (!quiz) return <div>Loading...</div>;

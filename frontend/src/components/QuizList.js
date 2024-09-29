@@ -1,3 +1,4 @@
+// QuizList.js
 import React, { useEffect, useState } from 'react';
 import quizService from '../services/quizService';
 import { Link } from 'react-router-dom';
@@ -8,13 +9,8 @@ const QuizList = () => {
 
   useEffect(() => {
     const fetchQuizzes = async () => {
-      try {
-        const data = await quizService.getAllQuizzes();
-        setQuizzes(data);
-      } catch (error) {
-        console.error("Error fetching quizzes:", error);
-        alert("An error occurred while fetching quizzes. Please try again.");
-      }
+      const data = await quizService.getAllQuizzes();
+      setQuizzes(data);
     };
 
     fetchQuizzes();
@@ -22,13 +18,8 @@ const QuizList = () => {
 
   const handleDeleteQuiz = async (id) => {
     if (window.confirm("Are you sure you want to delete this quiz?")) {
-      try {
-        await quizService.deleteQuiz(id);
-        setQuizzes(prevQuizzes => prevQuizzes.filter(quiz => quiz.id !== id)); // Cập nhật danh sách sau khi xóa
-      } catch (error) {
-        console.error("Error deleting quiz:", error);
-        alert("An error occurred while deleting the quiz. Please try again.");
-      }
+      await quizService.deleteQuiz(id);
+      setQuizzes(quizzes.filter(quiz => quiz.id !== id)); 
     }
   };
 
@@ -38,10 +29,10 @@ const QuizList = () => {
       <Link to="/quizzes/create">Create Quiz</Link>
       <ul>
         {quizzes.map((quiz) => (
-          <li key={quiz.id}>
-            <Link to={`/quizzes/${quiz.id}`}>{quiz.title}</Link>
-            <button onClick={() => handleDeleteQuiz(quiz.id)}>Delete</button>
-          </li>
+          <li key={quiz._id}>
+          <Link to={`/quizzes/${quiz._id}`}>{quiz.title}</Link>
+          <button onClick={() => handleDeleteQuiz(quiz._id)}>Delete</button>
+        </li>
         ))}
       </ul>
     </div>

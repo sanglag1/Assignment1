@@ -1,9 +1,9 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import Home from './pages/Home';
-import QuizList from './components/QuizList';
-import QuizDetails from './components/QuizDetails';
-import QuizCreate from './components/QuizCreate';
+import Home from './pages/Home'; // Trang chính
+import QuizList from './components/QuizList'; // Danh sách quiz
+import QuizDetails from './components/QuizDetails'; // Chi tiết quiz
+import QuizCreate from './components/QuizCreate'; // Tạo quiz mới
 
 const App = () => {
   return (
