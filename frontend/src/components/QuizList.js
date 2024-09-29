@@ -1,55 +1,46 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import './QuizList.css';
+import React, { useEffect, useState } from 'react';
+import quizService from '../services/quizService';
+import { Link } from 'react-router-dom';
+import '../styles/QuizList.css';
 
-const QuizList = ({ quizzes, setQuizzes }) => {
-  const navigate = useNavigate();
+const QuizList = () => {
+  const [quizzes, setQuizzes] = useState([]);
 
-  const handleDelete = async (quizId) => {
-    if (window.confirm('Are you sure you want to delete this quiz?')) {
+  useEffect(() => {
+    const fetchQuizzes = async () => {
       try {
-        await axios.delete(`http://localhost:3000/api/quizzes/${quizId}`);
-        setQuizzes(quizzes.filter((quiz) => quiz._id !== quizId));
+        const data = await quizService.getAllQuizzes();
+        setQuizzes(data);
       } catch (error) {
-        console.error('Error deleting quiz:', error);
+        console.error("Error fetching quizzes:", error);
+        alert("An error occurred while fetching quizzes. Please try again.");
+      }
+    };
+
+    fetchQuizzes();
+  }, []);
+
+  const handleDeleteQuiz = async (id) => {
+    if (window.confirm("Are you sure you want to delete this quiz?")) {
+      try {
+        await quizService.deleteQuiz(id);
+        setQuizzes(prevQuizzes => prevQuizzes.filter(quiz => quiz.id !== id)); // Cập nhật danh sách sau khi xóa
+      } catch (error) {
+        console.error("Error deleting quiz:", error);
+        alert("An error occurred while deleting the quiz. Please try again.");
       }
     }
   };
 
-  const handleView = (quizId) => {
-    navigate(`/quiz/${quizId}`);
-  };
-
-  const handleEdit = (quizId) => {
-    navigate(`/quiz/edit/${quizId}`);
-  };
-
-  if (quizzes.length === 0) {
-    return <p>No quizzes available. Please add some quizzes.</p>;
-  }
-
   return (
-    <div className="quiz-list-container">
-      <h2>Available Quizzes</h2>
-      <ul className="quiz-list">
+    <div className="quiz-list">
+      <h2>Quizzes</h2>
+      <Link to="/quizzes/create">Create Quiz</Link>
+      <ul>
         {quizzes.map((quiz) => (
-          <li key={quiz._id} className="quiz-item">
-            <div className="quiz-details">
-              <h3>{quiz.title}</h3>
-              <p>{quiz.description}</p>
-            </div>
-            <div className="quiz-actions">
-              <button className="btn view-btn" onClick={() => handleView(quiz._id)}>
-                View
-              </button>
-              <button className="btn edit-btn" onClick={() => handleEdit(quiz._id)}>
-                Edit
-              </button>
-              <button className="btn delete-btn" onClick={() => handleDelete(quiz._id)}>
-                Delete
-              </button>
-            </div>
+          <li key={quiz.id}>
+            <Link to={`/quizzes/${quiz.id}`}>{quiz.title}</Link>
+            <button onClick={() => handleDeleteQuiz(quiz.id)}>Delete</button>
           </li>
         ))}
       </ul>

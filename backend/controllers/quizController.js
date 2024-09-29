@@ -24,9 +24,33 @@ exports.getQuizById = async (req, res) => {
 // Create a new quiz
 exports.createQuiz = async (req, res) => {
   try {
-    const newQuiz = new Quiz(req.body);
+    const { title, description, questions } = req.body;
+
+    // Log dữ liệu nhận được từ frontend
+    console.log("Dữ liệu nhận được từ client:", req.body);
+
+    const newQuiz = new Quiz({
+      title,
+      description,
+      questions: [] // Khởi tạo mảng câu hỏi
+    });
+
+    // Lưu quiz mới vào cơ sở dữ liệu
     await newQuiz.save();
-    res.status(201).json(newQuiz);
+
+    // Thêm từng câu hỏi vào quiz
+    for (const questionData of questions) {
+      const newQuestion = new Question(questionData);
+      await newQuestion.save(); // Lưu câu hỏi vào cơ sở dữ liệu
+      newQuiz.questions.push(newQuestion._id); // Thêm ID của câu hỏi vào quiz
+    }
+
+    // Lưu lại quiz đã được cập nhật với các câu hỏi
+    await newQuiz.save();
+
+    // Populate câu hỏi để trả về dữ liệu đầy đủ
+    const populatedQuiz = await Quiz.findById(newQuiz._id).populate('questions');
+    res.status(201).json(populatedQuiz);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }

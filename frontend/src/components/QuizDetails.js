@@ -1,104 +1,92 @@
 import React, { useEffect, useState } from 'react';
+import quizService from '../services/quizService';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import './styles.css'; // Import CSS để sử dụng cho styling
 
 const QuizDetails = () => {
-  const { quizId } = useParams(); // Lấy quizId từ URL
-  const navigate = useNavigate(); // Dùng để điều hướng về danh sách quiz
+  const { quizId } = useParams();
+  const navigate = useNavigate();
   const [quiz, setQuiz] = useState(null);
-  const [answers, setAnswers] = useState({}); // Lưu câu trả lời của người dùng
-  const [showResults, setShowResults] = useState(false); // Hiển thị kết quả
+  const [selectedAnswers, setSelectedAnswers] = useState({});
+  const [feedback, setFeedback] = useState('');
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
   useEffect(() => {
     const fetchQuiz = async () => {
       try {
-        const response = await axios.get(`http://localhost:3000/api/quizzes/${quizId}`);
-        setQuiz(response.data);
+        const quizData = await quizService.getQuizById(quizId);
+        setQuiz(quizData);
       } catch (error) {
-        console.error('Error fetching quiz:', error);
+        console.error("Error fetching quiz:", error);
       }
     };
     fetchQuiz();
   }, [quizId]);
 
-  // Xử lý lựa chọn câu trả lời
-  const handleAnswerChange = (questionId, selectedOptionIndex) => {
-    if (!showResults) {
-      setAnswers({
-        ...answers,
-        [questionId]: selectedOptionIndex,
-      });
+  const handleAnswerSelection = (questionIndex, optionIndex) => {
+    setSelectedAnswers(prev => ({
+      ...prev,
+      [questionIndex]: optionIndex,
+    }));
+  };
+
+  const handleCheckAnswers = (questionIndex) => {
+    const question = quiz.questions[questionIndex];
+    const selectedAnswer = selectedAnswers[questionIndex];
+
+    if (selectedAnswer === undefined) {
+      setFeedback('Please select an answer before checking.');
+      return;
+    }
+
+    if (selectedAnswer === question.correctAnswerIndex) {
+      setFeedback('Correct!');
+    } else {
+      setFeedback(`Incorrect! Correct answer: ${question.options[question.correctAnswerIndex]}`);
     }
   };
 
-  // Xử lý khi nộp quiz
-  const handleSubmit = () => {
-    setShowResults(true); // Hiển thị kết quả và khóa lựa chọn
+  const handleNextQuestion = () => {
+    if (currentQuestionIndex < quiz.questions.length - 1) {
+      setCurrentQuestionIndex(prevIndex => prevIndex + 1);
+      setFeedback(''); // Reset feedback when moving to the next question
+    }
   };
 
-  // Xử lý khi quay lại danh sách quiz
-  const handleGoBack = () => {
-    navigate('/'); // Quay lại danh sách quiz
+  const handlePreviousQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(prevIndex => prevIndex - 1);
+      setFeedback(''); // Reset feedback when moving to the previous question
+    }
   };
 
-  if (!quiz) {
-    return <div>Loading...</div>;
-  }
+  const handleBackToHome = () => {
+    navigate('/'); // Navigate back to home
+  };
+
+  if (!quiz) return <div>Loading...</div>;
+
+  const question = quiz.questions[currentQuestionIndex];
 
   return (
-    <div className="quiz-details-container">
+    <div>
       <h2>{quiz.title}</h2>
-      <p>{quiz.description}</p>
-      <form>
-        {quiz.questions.map((question) => {
-          const userAnswer = answers[question._id];
-          const isCorrect = userAnswer === question.correctAnswerIndex;
-          return (
-            <div key={question._id} className="question-block">
-              <h3>{question.text}</h3>
-              <ul className="options-list">
-                {question.options.map((option, index) => (
-                  <li key={index}>
-                    <label className={showResults && index === question.correctAnswerIndex ? 'correct-answer' : ''}>
-                      <input
-                        type="radio"
-                        name={question._id} // Nhóm các tùy chọn theo câu hỏi
-                        value={index}
-                        checked={answers[question._id] === index}
-                        onChange={() => handleAnswerChange(question._id, index)}
-                        disabled={showResults} // Vô hiệu sau khi nộp bài
-                      />
-                      {option}
-                    </label>
-                  </li>
-                ))}
-              </ul>
-              {showResults && (
-                <p>
-                  {isCorrect ? (
-                    <span className="result correct">✔️ Correct</span>
-                  ) : (
-                    <span className="result wrong">
-                      ❌ Wrong (Correct answer: {question.options[question.correctAnswerIndex]})
-                    </span>
-                  )}
-                </p>
-              )}
-            </div>
-          );
-        })}
-        {!showResults && (
-          <button type="button" className="submit-btn" onClick={handleSubmit}>
-            Submit
-          </button>
-        )}
-      </form>
-      {showResults && (
-        <button type="button" className="back-btn" onClick={handleGoBack}>
-          Back to Quiz List
-        </button>
-      )}
+      <h3>{question.text}</h3>
+      {question.options.map((option, optionIndex) => (
+        <div key={optionIndex}>
+          <input
+            type="radio"
+            name={`question${currentQuestionIndex}`}
+            checked={selectedAnswers[currentQuestionIndex] === optionIndex}
+            onChange={() => handleAnswerSelection(currentQuestionIndex, optionIndex)}
+          />
+          {option}
+        </div>
+      ))}
+      <button onClick={() => handleCheckAnswers(currentQuestionIndex)}>Check Answer</button>
+      <button onClick={handlePreviousQuestion} disabled={currentQuestionIndex === 0}>Previous</button>
+      <button onClick={handleNextQuestion} disabled={currentQuestionIndex === quiz.questions.length - 1}>Next</button>
+      {feedback && <div>{feedback}</div>}
+      <button onClick={handleBackToHome}>Back to Home</button>
     </div>
   );
 };

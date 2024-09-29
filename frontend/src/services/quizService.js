@@ -1,47 +1,36 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:3000/api';
+const API_URL = 'http://localhost:3000/api/quizzes'; // Đảm bảo URL này chính xác
 
-// Fetch all quizzes
-export const getQuizzes = async () => {
-  try {
-    const response = await axios.get(`${API_URL}/quizzes`);
+const quizService = {
+  // Lấy tất cả quizzes
+  getAllQuizzes: async () => {
+    const response = await axios.get(API_URL);
+    return response.data; // Trả về danh sách quiz
+  },
+
+  // Lấy quiz theo ID
+  getQuizById: async (id) => {
+    const response = await axios.get(`${API_URL}/${id}`);
+    return response.data; // Trả về quiz theo id
+  },
+
+  // Tạo quiz mới
+  createQuiz: async (quizData) => {
+    const response = await axios.post(API_URL, quizData);
     return response.data;
-  } catch (error) {
-    console.error('Error fetching quizzes:', error);
-    throw error; // Re-throw the error if you want to handle it elsewhere
-  }
+  },
+
+  // Cập nhật quiz
+  updateQuiz: async (id, quizData) => {
+    const response = await axios.put(`${API_URL}/${id}`, quizData);
+    return response.data;
+  },
+
+  // Xóa quiz
+  deleteQuiz: async (id) => {
+    await axios.delete(`${API_URL}/${id}`);
+  },
 };
 
-// Fetch quiz by ID
-export const getQuizById = async (quizId) => {
-  try {
-    const response = await axios.get(`${API_URL}/quizzes/${quizId}`);
-    return response.data;
-  } catch (error) {
-    console.error(`Error fetching quiz with ID ${quizId}:`, error);
-    throw error;
-  }
-};
-
-// Create a new quiz
-export const createQuiz = async (quizData) => {
-  try {
-    const response = await axios.post(`${API_URL}/quizzes`, quizData);
-    return response.data;
-  } catch (error) {
-    console.error('Error creating quiz:', error);
-    throw error;
-  }
-};
-
-// Add a question to a quiz
-export const addQuestionToQuiz = async (quizId, questionData) => {
-  try {
-    const response = await axios.post(`${API_URL}/quizzes/${quizId}/question`, questionData);
-    return response.data;
-  } catch (error) {
-    console.error(`Error adding question to quiz with ID ${quizId}:`, error);
-    throw error;
-  }
-};
+export default quizService;

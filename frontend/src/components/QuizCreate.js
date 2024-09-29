@@ -1,82 +1,66 @@
-import React, { useState } from 'react';
-import axios from 'axios';
+import React, { useState } from 'react'; 
+import quizService from '../services/quizService';
 import { useNavigate } from 'react-router-dom';
-import '../assets/styles.css'; // Thêm đường dẫn đến file CSS nếu cần
+import '../styles/QuizCreate.css';
 
 const QuizCreate = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [questions, setQuestions] = useState([]);
-  const [newQuestion, setNewQuestion] = useState({ text: '', options: ['', ''], correctAnswerIndex: 0 });
+  const [newQuestion, setNewQuestion] = useState({ text: '', options: ['', '', '', ''], correctAnswerIndex: 0 }); // Khởi tạo 4 option
   const navigate = useNavigate();
 
   const handleAddQuestion = () => {
-    setQuestions((prev) => [...prev, newQuestion]);
-    setNewQuestion({ text: '', options: ['', ''], correctAnswerIndex: 0 }); // Reset input
+    if (newQuestion.text && newQuestion.options.length > 0 && newQuestion.options.some(option => option)) {
+      setQuestions(prev => [...prev, newQuestion]);
+      setNewQuestion({ text: '', options: ['', '', '', ''], correctAnswerIndex: 0 }); // Đặt lại 4 option cho câu hỏi mới
+    } else {
+      alert("Please fill in the question and at least one option.");
+    }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const quizData = { title, description, questions };
+  const handleCreateQuiz = async () => {
     try {
-      await axios.post('http://localhost:3000/api/quizzes', quizData);
-      alert('Quiz created!');
-      navigate('/'); // Điều hướng về trang danh sách quiz
+      const quizData = { title, description, questions };
+
+      if (!title || !description || questions.length === 0) {
+        alert("Please fill in all fields and add at least one question.");
+        return;
+      }
+
+      await quizService.createQuiz(quizData);
+      alert(`Quiz "${title}" created successfully!`);
+      navigate('/quizzes');
     } catch (error) {
-      console.error('Error creating quiz:', error);
+      console.error("Error creating quiz:", error);
+      alert("An error occurred while creating the quiz. Please try again.");
     }
   };
 
   return (
-    <div className="quiz-create-container">
+    <div className="quiz-create">
       <h2>Create Quiz</h2>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Title:</label>
-          <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} required />
-        </div>
-        <div>
-          <label>Description:</label>
-          <textarea value={description} onChange={(e) => setDescription(e.target.value)} required />
-        </div>
-        <div>
-          <h3>Add Question</h3>
-          <input
-            type="text"
-            placeholder="Question Text"
-            value={newQuestion.text}
-            onChange={(e) => setNewQuestion({ ...newQuestion, text: e.target.value })}
-            required
-          />
-          {newQuestion.options.map((option, index) => (
-            <input
-              key={index}
-              type="text"
-              value={option}
-              onChange={(e) => {
-                const options = [...newQuestion.options];
-                options[index] = e.target.value;
-                setNewQuestion({ ...newQuestion, options });
-              }}
-              required
-            />
-          ))}
-          <button type="button" onClick={() => setNewQuestion({ ...newQuestion, options: [...newQuestion.options, ''] })}>
-            Add Option
-          </button>
-          <input
-            type="number"
-            placeholder="Correct Answer Index"
-            value={newQuestion.correctAnswerIndex}
-            onChange={(e) => setNewQuestion({ ...newQuestion, correctAnswerIndex: e.target.value })}
-            min="0"
-            max={newQuestion.options.length - 1}
-            required
-          />
-          <button type="button" onClick={handleAddQuestion}>Add Question</button>
-        </div>
-        <button type="submit">Create Quiz</button>
-      </form>
+      <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" />
+      <input type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description" />
+
+      <h3>Add Question</h3>
+      <input type="text" value={newQuestion.text} onChange={(e) => setNewQuestion({ ...newQuestion, text: e.target.value })} placeholder="Question" />
+      {newQuestion.options.map((option, index) => (
+        <input key={index} type="text" value={option} onChange={(e) => {
+          const options = [...newQuestion.options];
+          options[index] = e.target.value;
+          setNewQuestion({ ...newQuestion, options });
+        }} placeholder={`Option ${index + 1}`} />
+      ))}
+      <button onClick={handleAddQuestion}>Add Question</button>
+
+      <select value={newQuestion.correctAnswerIndex} onChange={(e) => setNewQuestion({ ...newQuestion, correctAnswerIndex: e.target.value })}>
+        {newQuestion.options.map((_, index) => (
+          <option key={index} value={index}>Option {index + 1}</option>
+        ))}
+      </select>
+
+      <button onClick={handleCreateQuiz}>Create Quiz</button>
     </div>
   );
 };
